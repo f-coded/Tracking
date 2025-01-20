@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .contents {
+            padding: 35px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .tracking-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0, 60px;
+            gap: 10px;
+        }
+        .tracking-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .tracking-form button {
+            padding: 10px 20px;
+            background-color: #000080;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .tracking-form button:hover {
+            background-color: #000066;
+        }
+        .tracking-result {
+            margin-top: 20px;
+        }
+        .tracking-result h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .tracking-event {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: top;
+            padding: 10px, 12px, 12px, 15px;
+            margin-inline-start: auto;
+            margin-bottom: 10px;
+            /* margin-bottom: 10px;   */
+        }
+        .icon {
+            width: 17px;
+            height: 17px;
+            margin-right: 12px;
+            margin-left: 15px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .icon.black { background-color: rgb(0, 0, 0); box-shadow: 0 0 4px rgb(0, 0, 0); }
+        .icon.red { background-color: red;  box-shadow: 0 0 5px red; }
+        .icon.yellow { background-color: yellow; box-shadow: 0 0 5px yellow; }
+        .icon.green { background-color: green; box-shadow: 0 0 5px green; }
+        .icon.unknown-status { background-color: #bbb5b5; box-shadow: 0 0 5px red; }
+        .event-details {
+            flex: 1;
+        }
+        .event-date {
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            font-size: 15px;
+            color: #454545;
+            margin: 0;
+            padding: 3px 0 10px 0;
+        }
+        .event-description {
+            font-size: 17px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 3px 0 2px 0;
+        }
+        .event-additional {
+            font-size: 15px;
+            color: #454545;
+            margin-top: 10px;
+        }  
+        .demarcation {
+            border-top: 1px dotted #ccc;
+            margin: 5px 0;
+            padding: 3px 0 2px 0;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #555;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="contents">
+        <div class="header">
+            <h1>Track Your Shipment</h1>
+        </div>
+        <div class="tracking-form">
+            <input type="text" id="trackingId" placeholder="Enter Tracking ID">
+            <button onclick="track()">Enter</button>
+        </div>
+        <div id="result" class="tracking-result"></div>
+        </div>
+    </div>
+    <script>
+        async function track() {
+            const trackingId = document.getElementById('trackingId').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!trackingId) {
+                resultDiv.innerHTML = '<p class="error">Please enter a Tracking ID.</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p class="loading">Loading...</p>';
+
+            try {
+                const response = await fetch(`http://localhost:5000/track/${trackingId}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (!data.events || data.events.length === 0) {
+                        resultDiv.innerHTML = '<p class="error">No events found for this Tracking ID.</p>';
+                        return;
+                    }
+
+                    let html = '<h3>Tracking Details:</h3>';
+                    data.events.forEach(event => {
+                        const iconClass = event.status ? event.status.toLowerCase() : 'unknown-status';
+                        html += `
+                            <div>
+                                <div class="tracking-event">
+                                    <div class="icon ${iconClass}"></div>
+                                    <div class="event-details">
+                                        <p class="event-date">${event.date} - ${event.time}</p>
+                                        <p class="event-description">${event.description}</p>
+                                        <p class="event-additional">${event.additionalInfo}</p>
+                                        <p class="demarcation"></p>
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<p class="error">Tracking ID not found.</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">Error fetching tracking data.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
