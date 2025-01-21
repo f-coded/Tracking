@@ -34,7 +34,7 @@ const TrackingSchema = new mongoose.Schema({
     ],
 });
 
-const TrackingData = mongoose.model('TrackingData', TrackingSchema);
+const TrackingData = mongoose.model('TrackingData', TrackingSchema, 'trackingdatas');
 
 // Route to get events by trackingId
 app.get('/track/:trackingId', async (req, res) => {
@@ -59,10 +59,15 @@ const PORT = process.env.PORT;
 // Use MONGODB_URI from .env
 
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+        connectTimeoutMS: 10000,  // Connection timeout of 10 seconds
+        socketTimeoutMS: 45000,   // Socket timeout of 45 seconds
+    })
     .then(() => console.log('Connected to MongoDB Atlas'))
     .catch((error) => console.error('Database connection error:', error));
 
+
+    
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
